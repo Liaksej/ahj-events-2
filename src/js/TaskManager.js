@@ -1,3 +1,6 @@
+import { Task } from "./Task";
+import { taskVault } from "./taskVault";
+
 export class TaskManager {
   constructor() {
     this.allTaskBox = document.querySelector(".all-tasks");
@@ -5,27 +8,53 @@ export class TaskManager {
     this.inputTask = document.querySelector(".input-task");
   }
 
+  _printTasks(filter = null) {
+    this.allTaskBox.querySelectorAll(".task").forEach((task) => {
+      task.remove();
+    });
+    taskVault.forEach((task) => {
+      if (
+        !task.taskPinned &&
+        (filter === null ||
+          filter === "" ||
+          task.taskText.toLowerCase().startsWith(filter.toLowerCase()))
+      ) {
+        const taskElement = document.createElement("div");
+        taskElement.classList.add("task");
+        taskElement.dataset.id = task.id;
+        taskElement.innerHTML = `<div>${task.taskText}</div><div class="circle">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>`;
+        this.allTaskBox.appendChild(taskElement);
+      }
+    });
+  }
+
+  _printPinned() {
+    this.pinned.querySelectorAll(".task").forEach((task) => {
+      task.remove();
+    });
+    taskVault.forEach((task) => {
+      if (task.taskPinned) {
+        const taskElement = document.createElement("div");
+        taskElement.classList.add("task");
+        taskElement.dataset.id = task.id;
+        taskElement.innerHTML = `<div>${task.taskText}</div><div class="circle">&nbsp;V&nbsp;</div>`;
+        this.pinned.appendChild(taskElement);
+      }
+    });
+  }
+
   addTask() {
     const form = document.querySelector(".form");
     form.addEventListener("submit", (event) => {
       this.inputTask.value = this.inputTask.value.trim();
       if (this.inputTask.value) {
-        const task = document.createElement("div");
-        task.classList.add("task");
-        task.innerHTML = `<div>${this.inputTask.value}</div><div class="circle">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>`;
-        this.allTaskBox.appendChild(task);
+        taskVault.push(new Task(this.inputTask.value));
+        this._printTasks();
         this.inputTask.value = "";
-        if (this.allTaskBox.querySelector(".task.hidden")) {
-          Array.from(document.querySelectorAll(".task.hidden")).forEach(
-            (hidden) => {
-              hidden.classList.remove("hidden");
-            },
-          );
-          this.allTaskBox
-            .querySelector(".notification_empty")
-            .classList.add("hidden");
-        }
       }
+      this.allTaskBox
+        .querySelector(".notification_empty")
+        .classList.add("hidden");
       event.preventDefault();
     });
   }
@@ -41,7 +70,7 @@ export class TaskManager {
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         if (mutation.type === "childList") {
-          if (!this.pinned.querySelector(".task")) {
+          if (!taskVault.find((task) => task.taskPinned)) {
             findNotification.classList.remove("hidden");
           }
         }
@@ -55,8 +84,13 @@ export class TaskManager {
       if (
         Array.from(document.querySelectorAll(".circle")).includes(event.target)
       ) {
-        event.target.innerHTML = "&nbsp;V&nbsp;";
-        this.pinned.appendChild(event.target.closest(".task"));
+        const elementToPin = taskVault.find(
+          (target) =>
+            target.id.toString() === event.target.closest(".task").dataset.id,
+        );
+        elementToPin.taskPinned = true;
+        this._printPinned();
+        this._printTasks();
         const notification = this.pinned.querySelector(".notification_pinned");
         if (notification) {
           notification.classList.add("hidden");
@@ -70,17 +104,13 @@ export class TaskManager {
       if (
         Array.from(document.querySelectorAll(".circle")).includes(event.target)
       ) {
-        event.target.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-        if (
-          this.inputTask.value !== "" &&
-          !event.target
-            .closest(".task")
-            .textContent.toLowerCase()
-            .startsWith(this.inputTask.value.toLowerCase())
-        ) {
-          event.target.closest(".task").classList.add("hidden");
-        }
-        this.allTaskBox.appendChild(event.target.closest(".task"));
+        const elementToPin = taskVault.find(
+          (target) =>
+            target.id.toString() === event.target.closest(".task").dataset.id,
+        );
+        elementToPin.taskPinned = false;
+        this._printPinned();
+        this._printTasks();
       }
     });
   }
@@ -92,26 +122,15 @@ export class TaskManager {
     this.allTaskBox.appendChild(notification);
 
     this.inputTask.addEventListener("input", (event) => {
-      const input = event.target.value.toLowerCase();
-      Array.from(this.allTaskBox.querySelectorAll(".task")).forEach((task) => {
-        if (!task.textContent.toLowerCase().startsWith(input)) {
-          task.classList.add("hidden");
-        } else {
-          task.classList.remove("hidden");
-        }
-      });
+      this._printTasks(event.target.value);
+
       const findNotification = this.allTaskBox.querySelector(
         ".notification_empty",
       );
       if (this.allTaskBox.querySelector(".task")) {
-        if (
-          this.allTaskBox.querySelectorAll(".task.hidden").length ===
-          this.allTaskBox.querySelectorAll(".task").length
-        ) {
-          findNotification.classList.remove("hidden");
-        } else {
-          findNotification.classList.add("hidden");
-        }
+        findNotification.classList.add("hidden");
+      } else {
+        findNotification.classList.remove("hidden");
       }
     });
   }
