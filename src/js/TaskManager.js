@@ -43,6 +43,18 @@ export class TaskManager {
     });
   }
 
+  _checkNotificationEmpty() {
+    const findNotification = this.allTaskBox.querySelector(
+      ".notification_empty",
+    );
+
+    if (this.allTaskBox.querySelector(".task")) {
+      findNotification.classList.add("hidden");
+    } else {
+      findNotification.classList.remove("hidden");
+    }
+  }
+
   addTask() {
     const form = document.querySelector(".form");
     form.addEventListener("submit", (event) => {
@@ -91,6 +103,7 @@ export class TaskManager {
         elementToPin.taskPinned = true;
         this._printPinned();
         this._printTasks(this.inputTask.value);
+        this._checkNotificationEmpty();
         const notification = this.pinned.querySelector(".notification_pinned");
         if (notification) {
           notification.classList.add("hidden");
@@ -110,7 +123,8 @@ export class TaskManager {
         );
         elementToPin.taskPinned = false;
         this._printPinned();
-        this._printTasks();
+        this._printTasks(this.inputTask.value);
+        this._checkNotificationEmpty();
       }
     });
   }
@@ -124,14 +138,7 @@ export class TaskManager {
     this.inputTask.addEventListener("input", (event) => {
       this._printTasks(event.target.value);
 
-      const findNotification = this.allTaskBox.querySelector(
-        ".notification_empty",
-      );
-      if (this.allTaskBox.querySelector(".task")) {
-        findNotification.classList.add("hidden");
-      } else {
-        findNotification.classList.remove("hidden");
-      }
+      this._checkNotificationEmpty();
     });
   }
 }
