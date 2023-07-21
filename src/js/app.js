@@ -8,6 +8,7 @@ function app() {
   taskManager.pinnedTaskListIsEmpty();
   taskManager.addPinedTask();
   taskManager.removePinedTask();
+  taskManager.filterTasks();
 }
 
 app();
