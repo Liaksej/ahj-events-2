@@ -90,7 +90,7 @@ export class TaskManager {
         );
         elementToPin.taskPinned = true;
         this._printPinned();
-        this._printTasks();
+        this._printTasks(this.inputTask.value);
         const notification = this.pinned.querySelector(".notification_pinned");
         if (notification) {
           notification.classList.add("hidden");
